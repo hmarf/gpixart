@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	image "image"
 	"image/color"
 	"image/draw"
@@ -136,18 +137,30 @@ func makeOutputImage(width, height int) *image.RGBA {
 	return image.NewRGBA(image.Rect(0, 0, width, height))
 }
 
+func resizeImage(img image.Image, width uint, height uint) image.Image {
+	return resize.Resize(width, height, img, resize.Lanczos3)
+}
+
 func resizeAndMakeImage(img image.Image, width uint, height uint, n_cluster int) *image.RGBA {
-	img_resized := resize.Resize(width, height, img, resize.Lanczos3)
 	oImage := makeOutputImage(int(width), int(height))
-	if x, ok := img_resized.(*image.RGBA); ok {
-		kmeans(x, oImage, n_cluster)
-		return x
-	} else if _, ok := img_resized.(*image.YCbCr); ok {
+	if _, ok := img.(*image.NRGBA); ok {
+		if aa, ok := resizeImage(img, width, height).(*image.RGBA); ok {
+			kmeans(aa, oImage, n_cluster)
+			return aa
+		}
+	} else if _, ok := img.(*image.RGBA); ok {
+		if aa, ok := resizeImage(img, width, height).(*image.RGBA); ok {
+			kmeans(aa, oImage, n_cluster)
+			return aa
+		}
+	} else if _, ok := img.(*image.YCbCr); ok {
 		b := img.Bounds()
 		m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 		draw.Draw(m, m.Bounds(), img, b.Min, draw.Src)
-		kmeans(m, oImage, n_cluster)
-		return m
+		if aa, ok := resizeImage(m, width, height).(*image.RGBA); ok {
+			kmeans(aa, oImage, n_cluster)
+			return aa
+		}
 	}
 	return nil
 }
@@ -181,7 +194,10 @@ func main() {
 	rct := img.Bounds()
 	height, width := calcurateImageSize(rct.Dy(), rct.Dx())
 	newImage := resizeAndMakeImage(img, uint(height), uint(width), 2)
-	file, _ = os.Create("./image/output.jpg")
+	file, err = os.Create("./image/output.jpg")
+	if err != nil {
+		fmt.Println(err)
+	}
 	defer file.Close()
 
 	if err := jpeg.Encode(file, newImage, &jpeg.Options{100}); err != nil {
