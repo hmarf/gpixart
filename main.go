@@ -3,8 +3,8 @@ package main
 import (
 	image "image"
 	"image/color"
+	"image/draw"
 	jpeg "image/jpeg"
-	png "image/png"
 	"log"
 	"math"
 	"math/rand"
@@ -14,7 +14,7 @@ import (
 	"github.com/nfnt/resize"
 )
 
-func imageToUnit8s(img *image.RGBA) []color.RGBA {
+func rgbaToUnit8s(img *image.RGBA) []color.RGBA {
 	n_pixels := (img.Rect.Max.X - img.Rect.Min.X) * (img.Rect.Max.Y - img.Rect.Min.Y)
 	vcolor := make([]color.RGBA, n_pixels)
 	index := 0
@@ -44,9 +44,9 @@ func distance(color1 color.RGBA, color2 color.RGBA) float64 {
 	return distance
 }
 
-func kmeans(img *image.RGBA, n_cluster int) {
+func kmeans(img *image.RGBA, oImage *image.RGBA, n_cluster int) {
 
-	vcolor := imageToUnit8s(img)
+	vcolor := rgbaToUnit8s(img)
 	// ベクトル
 	n_pixels := len(vcolor)
 	// クラスタ中心数 = 8 * ビット数
@@ -132,11 +132,22 @@ func updataImageByUint8s(img *image.RGBA, vcolor []color.RGBA) {
 	}
 }
 
+func makeOutputImage(width, height int) *image.RGBA {
+	return image.NewRGBA(image.Rect(0, 0, width, height))
+}
+
 func resizeAndMakeImage(img image.Image, width uint, height uint, n_cluster int) *image.RGBA {
 	img_resized := resize.Resize(width, height, img, resize.Lanczos3)
+	oImage := makeOutputImage(int(width), int(height))
 	if x, ok := img_resized.(*image.RGBA); ok {
-		kmeans(x, n_cluster)
+		kmeans(x, oImage, n_cluster)
 		return x
+	} else if _, ok := img_resized.(*image.YCbCr); ok {
+		b := img.Bounds()
+		m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+		draw.Draw(m, m.Bounds(), img, b.Min, draw.Src)
+		kmeans(m, oImage, n_cluster)
+		return m
 	}
 	return nil
 }
@@ -158,19 +169,18 @@ func calcurateImageSize(h, w int) (newH, newW int) {
 
 func main() {
 
-	file, err := os.Open("./image/pokemon.png")
+	file, err := os.Open("./image/pokemon.jpg")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	img, err := png.Decode(file)
+	img, err := jpeg.Decode(file)
 	if err != nil {
 		log.Fatal(err)
 	}
 	rct := img.Bounds()
 	height, width := calcurateImageSize(rct.Dy(), rct.Dx())
-	newImage := resizeAndMakeImage(img, uint(height), uint(width), 32)
-
+	newImage := resizeAndMakeImage(img, uint(height), uint(width), 2)
 	file, _ = os.Create("./image/output.jpg")
 	defer file.Close()
 
