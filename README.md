@@ -2,6 +2,8 @@
 ## Overview
 Convert the image into a pixel art.
 
+<img src="https://github.com/hmarf/pixelArt-golang/blob/master/img/upload.png?raw=true" width="700px">
+
 ## Usage
 
 ```
