@@ -23,7 +23,7 @@ type Option struct {
 	Ncolor     int
 }
 
-func rgbaToUnit8s(img *image.RGBA) []color.RGBA {
+func rgbaToArray(img *image.RGBA) []color.RGBA {
 	pixels := (img.Rect.Max.X - img.Rect.Min.X) * (img.Rect.Max.Y - img.Rect.Min.Y)
 	vcolor := make([]color.RGBA, pixels)
 	index := 0
@@ -55,7 +55,7 @@ func distance(color1 color.RGBA, color2 color.RGBA) float64 {
 
 func kmeans(img *image.RGBA, oImage *image.RGBA, cluster int) {
 
-	vcolor := rgbaToUnit8s(img)
+	vcolor := rgbaToArray(img)
 	npixels := len(vcolor)
 	vcluster := make([]color.RGBA, cluster)
 	residual := float32(npixels)
@@ -93,11 +93,11 @@ func kmeans(img *image.RGBA, oImage *image.RGBA, cluster int) {
 
 		for vTypeIndex, color_ := range vcolor {
 			clusterIndexMin := vtype[vTypeIndex]
-			distance_min := 1000.0
+			distanceMin := 1000.0
 			for clusterIndex, cluster := range vcluster {
 				distance := distance(color_, cluster)
-				if distance < distance_min {
-					distance_min = distance
+				if distance < distanceMin {
+					distanceMin = distance
 					clusterIndexMin = clusterIndex
 				}
 			}
@@ -113,10 +113,10 @@ func kmeans(img *image.RGBA, oImage *image.RGBA, cluster int) {
 	for index := 0; index < npixels; index++ {
 		vcolor[index] = vcluster[vtype[index]]
 	}
-	updataImageByUint8s(img, vcolor)
+	updataImage(img, vcolor)
 }
 
-func updataImageByUint8s(img *image.RGBA, vcolor []color.RGBA) {
+func updataImage(img *image.RGBA, vcolor []color.RGBA) {
 	index := 0
 	for x := img.Rect.Min.X; x < img.Rect.Max.X; x++ {
 		for y := img.Rect.Min.Y; y < img.Rect.Max.Y; y++ {
