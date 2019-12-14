@@ -1,4 +1,4 @@
-# pixel art
+# gpiart( pixel art )
 ## Overview
 Convert the image into a pixel art.
 
@@ -33,5 +33,13 @@ GLOBAL OPTIONS:
                              Number of colors used for pixel art (default: 16)
    --help, -h                show help
    --version, -v             print the version
+```
+
+## Example
+
+Convert './image/pokemon.jpg' to './output.jpg' 32 pixel
+
+```
+gpixart -i ./image/pokemon.jpg -o ./outout.jpg -m 30 -c 32
 ```
 
