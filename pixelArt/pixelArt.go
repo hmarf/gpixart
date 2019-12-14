@@ -131,7 +131,16 @@ func makeOutputImage(width, height int) *image.RGBA {
 }
 
 func resizeImage(img image.Image, width uint, height uint) image.Image {
-	return resize.Resize(width, height, img, resize.Lanczos3)
+	resizeImage := resize.Resize(width, height, img, resize.Lanczos3)
+	file, err := os.Create("./resize.jpg")
+	if err != nil {
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "creation of the save destination file failed.")
+	}
+	defer file.Close()
+	if err := jpeg.Encode(file, resizeImage, &jpeg.Options{100}); err != nil {
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "Failed to save image.")
+	}
+	return resizeImage
 }
 
 func resizeAndMakeImage(img image.Image, width uint, height uint, cluster int) *image.RGBA {
