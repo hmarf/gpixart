@@ -8,7 +8,6 @@ import (
 	"image/jpeg"
 	_ "image/jpeg"
 	_ "image/png"
-	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -18,13 +17,13 @@ import (
 )
 
 func rgbaToUnit8s(img *image.RGBA) []color.RGBA {
-	n_pixels := (img.Rect.Max.X - img.Rect.Min.X) * (img.Rect.Max.Y - img.Rect.Min.Y)
-	vcolor := make([]color.RGBA, n_pixels)
+	pixels := (img.Rect.Max.X - img.Rect.Min.X) * (img.Rect.Max.Y - img.Rect.Min.Y)
+	vcolor := make([]color.RGBA, pixels)
 	index := 0
 	for x := img.Rect.Min.X; x < img.Rect.Max.X; x++ {
 		for y := img.Rect.Min.Y; y < img.Rect.Max.Y; y++ {
 			vcolor[index], _ = img.At(x, y).(color.RGBA)
-			index += 1
+			index++
 		}
 	}
 	return vcolor
@@ -47,64 +46,64 @@ func distance(color1 color.RGBA, color2 color.RGBA) float64 {
 	return distance
 }
 
-func kmeans(img *image.RGBA, oImage *image.RGBA, n_cluster int) {
+func kmeans(img *image.RGBA, oImage *image.RGBA, cluster int) {
 
 	vcolor := rgbaToUnit8s(img)
-	n_pixels := len(vcolor)
-	vcluster := make([]color.RGBA, n_cluster)
-	residual := float32(n_pixels)
+	npixels := len(vcolor)
+	vcluster := make([]color.RGBA, cluster)
+	residual := float32(npixels)
 
 	rand.Seed(time.Now().UnixNano())
-	vtype := make([]int, n_pixels)
+	vtype := make([]int, npixels)
 	for i := 0; i < len(vtype); i++ {
-		vtype[i] = rand.Intn(n_cluster)
+		vtype[i] = rand.Intn(cluster)
 	}
 
-	n_iter := 0
-	for residual > 0 && n_iter < 30 {
+	niter := 0
+	for residual > 0 && niter < 30 {
 		residual = 0
-		for i := 0; i < n_cluster; i++ {
-			vtype_cluster_i := make([]int, 0)
-			for index, type_cluster := range vtype {
-				if type_cluster == i {
-					vtype_cluster_i = append(vtype_cluster_i, index)
+		for i := 0; i < cluster; i++ {
+			clusterInt := make([]int, 0)
+			for index, typeCluster := range vtype {
+				if typeCluster == i {
+					clusterInt = append(clusterInt, index)
 				}
 			}
-			if len(vtype_cluster_i) == 0 {
+			if len(clusterInt) == 0 {
 				continue
 			}
-			n_vtype_cluster_i := float64(len(vtype_cluster_i))
-			r_sum, g_sum, b_sum, a_sum := 0.0, 0.0, 0.0, 0.0
-			for _, type_cluster_i := range vtype_cluster_i {
-				color_ := vcolor[type_cluster_i]
-				r_sum += float64(color_.R) / n_vtype_cluster_i
-				g_sum += float64(color_.G) / n_vtype_cluster_i
-				b_sum += float64(color_.B) / n_vtype_cluster_i
-				a_sum += float64(color_.A) / n_vtype_cluster_i
+			nclusterInt := float64(len(clusterInt))
+			rS, gS, bS, aS := 0.0, 0.0, 0.0, 0.0
+			for _, typeCluster := range clusterInt {
+				color_ := vcolor[typeCluster]
+				rS += float64(color_.R) / nclusterInt
+				gS += float64(color_.G) / nclusterInt
+				bS += float64(color_.B) / nclusterInt
+				aS += float64(color_.A) / nclusterInt
 			}
-			vcluster[i] = color.RGBA{uint8(r_sum), uint8(g_sum), uint8(b_sum), uint8(a_sum)}
+			vcluster[i] = color.RGBA{uint8(rS), uint8(gS), uint8(bS), uint8(aS)}
 		}
 
-		for vtype_index, color_ := range vcolor {
-			cluster_index_min := vtype[vtype_index]
+		for vTypeIndex, color_ := range vcolor {
+			clusterIndexMin := vtype[vTypeIndex]
 			distance_min := 1000.0
-			for cluster_index, cluster := range vcluster {
+			for clusterIndex, cluster := range vcluster {
 				distance := distance(color_, cluster)
 				if distance < distance_min {
 					distance_min = distance
-					cluster_index_min = cluster_index
+					clusterIndexMin = clusterIndex
 				}
 			}
-			if cluster_index_min != vtype[vtype_index] {
-				residual += 1
+			if clusterIndexMin != vtype[vTypeIndex] {
+				residual++
 			}
-			vtype[vtype_index] = cluster_index_min
+			vtype[vTypeIndex] = clusterIndexMin
 		}
 
-		n_iter += 1
+		niter++
 	}
 
-	for index := 0; index < n_pixels; index++ {
+	for index := 0; index < npixels; index++ {
 		vcolor[index] = vcluster[vtype[index]]
 	}
 	updataImageByUint8s(img, vcolor)
@@ -115,7 +114,7 @@ func updataImageByUint8s(img *image.RGBA, vcolor []color.RGBA) {
 	for x := img.Rect.Min.X; x < img.Rect.Max.X; x++ {
 		for y := img.Rect.Min.Y; y < img.Rect.Max.Y; y++ {
 			img.Set(x, y, vcolor[index])
-			index += 1
+			index++
 		}
 	}
 }
@@ -128,16 +127,16 @@ func resizeImage(img image.Image, width uint, height uint) image.Image {
 	return resize.Resize(width, height, img, resize.Lanczos3)
 }
 
-func resizeAndMakeImage(img image.Image, width uint, height uint, n_cluster int) *image.RGBA {
+func resizeAndMakeImage(img image.Image, width uint, height uint, cluster int) *image.RGBA {
 	oImage := makeOutputImage(int(width), int(height))
 	if _, ok := img.(*image.NRGBA); ok {
 		if aa, ok := resizeImage(img, width, height).(*image.RGBA); ok {
-			kmeans(aa, oImage, n_cluster)
+			kmeans(aa, oImage, cluster)
 			return aa
 		}
 	} else if _, ok := img.(*image.RGBA); ok {
 		if aa, ok := resizeImage(img, width, height).(*image.RGBA); ok {
-			kmeans(aa, oImage, n_cluster)
+			kmeans(aa, oImage, cluster)
 			return aa
 		}
 	} else if _, ok := img.(*image.YCbCr); ok {
@@ -145,7 +144,7 @@ func resizeAndMakeImage(img image.Image, width uint, height uint, n_cluster int)
 		m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 		draw.Draw(m, m.Bounds(), img, b.Min, draw.Src)
 		if aa, ok := resizeImage(m, width, height).(*image.RGBA); ok {
-			kmeans(aa, oImage, n_cluster)
+			kmeans(aa, oImage, cluster)
 			return aa
 		}
 	}
@@ -169,27 +168,31 @@ func calcurateImageSize(h, w int) (newH, newW int) {
 
 func main() {
 
-	file, err := os.Open("./image/pokemon.jpg")
+	file, err := os.Open("abbb.txt")
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "no such file or directory")
+		return
 	}
 	defer file.Close()
 
 	img, _, err := image.Decode(file)
 	if err != nil {
-		log.Print(err)
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "The file cannot be read. Please select an image file.")
+		return
 	}
 
 	rct := img.Bounds()
 	height, width := calcurateImageSize(rct.Dy(), rct.Dx())
-	newImage := resizeAndMakeImage(img, uint(height), uint(width), 2)
-	file, err = os.Create("./output.jpg")
+	newImage := resizeAndMakeImage(img, uint(height), uint(width), 16)
+	file, err = os.Create("./aaa/aa/output.jpg")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "creation of the save destination file failed.")
+		return
 	}
 	defer file.Close()
 
 	if err := jpeg.Encode(file, newImage, &jpeg.Options{100}); err != nil {
-		panic(err)
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "Failed to save image.")
+		return
 	}
 }
