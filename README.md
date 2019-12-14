@@ -1,4 +1,4 @@
-# gpiart( pixel art )
+# gpixart( pixel art )
 ## Overview
 Convert the image into a pixel art.
 
@@ -8,7 +8,7 @@ Convert the image into a pixel art.
 
 ```
 NAME:
-   pixel art - Convert the image into a pixel art.
+   gpixart - Convert the image into a pixel art.
 
 USAGE:
    main [global options] command [command options] [arguments...]
