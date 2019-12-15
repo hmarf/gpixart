@@ -2,7 +2,7 @@
 ## Overview
 Convert the image into a pixel art.
 
-<img src="https://github.com/hmarf/pixelArt-golang/blob/master/img/upload.png?raw=true" width="700px">
+<img src="https://github.com/hmarf/gpixart/blob/master/img/summaryImage.png?raw=true" width="700px">
 
 ## Usage
 
@@ -36,10 +36,18 @@ GLOBAL OPTIONS:
 ```
 
 ## Example
+The resized-image is also output at the same time. The image is a full-color pixel art.
+<img src="https://github.com/hmarf/gpixart/blob/master/img/resize.png?raw=true" width="150px">
 
-Convert './image/pokemon.jpg' to './output.jpg' 32 pixel
+- Convert './image/pokemon.jpg' to './output.jpg' 16 pixel
+```
+gpixart -i ./image/pokemon.jpg -o ./outout.jpg -m 40 -c 16
+```
+<img src="https://github.com/hmarf/gpixart/blob/master/img/16color.png?raw=true" width="150px">
 
+- Convert './image/pokemon.jpg' to './output.jpg' 16 pixel
 ```
-gpixart -i ./image/pokemon.jpg -o ./outout.jpg -m 30 -c 32
+gpixart -i ./image/pokemon.jpg -o ./outout.jpg -m 40 -c 4
 ```
+<img src="https://github.com/hmarf/gpixart/blob/master/img/4color.png?raw=true" width="150px">
 
