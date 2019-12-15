@@ -53,7 +53,7 @@ func distance(color1 color.RGBA, color2 color.RGBA) float64 {
 	return distance
 }
 
-func kmeans(img *image.RGBA, oImage *image.RGBA, cluster int, size int) *image.RGBA {
+func kmeans(img *image.RGBA, cluster int, size int) *image.RGBA {
 
 	vcolor := rgbaToArray(img)
 	npixels := len(vcolor)
@@ -113,10 +113,10 @@ func kmeans(img *image.RGBA, oImage *image.RGBA, cluster int, size int) *image.R
 	for index := 0; index < npixels; index++ {
 		vcolor[index] = vcluster[vtype[index]]
 	}
-	return updataImage(img, vcolor, size)
+	return upQualityImage(img, vcolor, size)
 }
 
-func updataImage(img *image.RGBA, vcolor []color.RGBA, size int) *image.RGBA {
+func upQualityImage(img *image.RGBA, vcolor []color.RGBA, size int) *image.RGBA {
 	imgSrc := img.Bounds()
 	newImage := image.NewRGBA(image.Rect(0, 0, imgSrc.Dx()*size, imgSrc.Dy()*size))
 	index := 0
@@ -133,43 +133,28 @@ func updataImage(img *image.RGBA, vcolor []color.RGBA, size int) *image.RGBA {
 	return newImage
 }
 
-func makeOutputImage(width, height int) *image.RGBA {
-	return image.NewRGBA(image.Rect(0, 0, width, height))
-}
-
-func resizeImage(img image.Image, nwidth uint, nheight uint) image.Image {
-	resizeImage := resize.Resize(nwidth, nheight, img, resize.Lanczos3)
-	file, err := os.Create("./resize.jpg")
-	if err != nil {
-		fmt.Printf("\x1b[31m%s\x1b[0m\n", "creation of the save destination file failed.")
-	}
-	defer file.Close()
-	if err := jpeg.Encode(file, resizeImage, &jpeg.Options{100}); err != nil {
-		fmt.Printf("\x1b[31m%s\x1b[0m\n", "Failed to save image.")
-	}
+func resizeImage(img image.Image, nwidth uint, nheight uint, size int) *image.RGBA {
+	resizeImage := (resize.Resize(nwidth, nheight, img, resize.Lanczos3)).(*image.RGBA)
+	saveImage("./resize.jpg", upQualityImage(resizeImage, rgbaToArray(resizeImage), size))
 	return resizeImage
 }
 
 func resizeAndMakeImage(img image.Image, width uint, height uint, cluster int, minSize int) *image.RGBA {
-	oImage := makeOutputImage(int(width), int(height))
 	if _, ok := img.(*image.NRGBA); ok {
-		if aa, ok := resizeImage(img, width, height).(*image.RGBA); ok {
-			newImage := kmeans(aa, oImage, cluster, minSize)
-			return newImage
-		}
+		b := img.Bounds()
+		m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+		draw.Draw(m, m.Bounds(), img, b.Min, draw.Src)
+		newImage := kmeans(resizeImage(m, width, height, minSize), cluster, minSize)
+		return newImage
 	} else if _, ok := img.(*image.RGBA); ok {
-		if aa, ok := resizeImage(img, width, height).(*image.RGBA); ok {
-			newImage := kmeans(aa, oImage, cluster, minSize)
-			return newImage
-		}
+		newImage := kmeans(resizeImage(img, width, height, minSize), cluster, minSize)
+		return newImage
 	} else if _, ok := img.(*image.YCbCr); ok {
 		b := img.Bounds()
 		m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
 		draw.Draw(m, m.Bounds(), img, b.Min, draw.Src)
-		if aa, ok := resizeImage(m, width, height).(*image.RGBA); ok {
-			newImage := kmeans(aa, oImage, cluster, minSize)
-			return newImage
-		}
+		newImage := kmeans(resizeImage(m, width, height, minSize), cluster, minSize)
+		return newImage
 	}
 	return nil
 }
@@ -186,6 +171,20 @@ func calcurateImageSize(h, w, minSize int) (newH, newW int) {
 		newH = minSize
 	}
 	return
+}
+
+func saveImage(fileName string, img *image.RGBA) {
+	file, err := os.Create(fileName)
+	if err != nil {
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "creation of the save destination file failed.")
+		return
+	}
+	defer file.Close()
+
+	if err := jpeg.Encode(file, img, &jpeg.Options{100}); err != nil {
+		fmt.Printf("\x1b[31m%s\x1b[0m\n", "Failed to save image.")
+		return
+	}
 }
 
 func PixelArt(o Option) {
@@ -207,15 +206,6 @@ func PixelArt(o Option) {
 	width := rct.Dx()
 	nheight, nwidth := calcurateImageSize(height, width, o.MinSize)
 	newImage := resizeAndMakeImage(img, uint(nheight), uint(nwidth), o.Ncolor, o.MinSize)
-	file, err = os.Create(o.OutputFile)
-	if err != nil {
-		fmt.Printf("\x1b[31m%s\x1b[0m\n", "creation of the save destination file failed.")
-		return
-	}
-	defer file.Close()
 
-	if err := jpeg.Encode(file, newImage, &jpeg.Options{100}); err != nil {
-		fmt.Printf("\x1b[31m%s\x1b[0m\n", "Failed to save image.")
-		return
-	}
+	saveImage(o.OutputFile, newImage)
 }
