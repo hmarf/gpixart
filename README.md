@@ -37,6 +37,7 @@ GLOBAL OPTIONS:
 
 ## Example
 The resized-image is also output at the same time. The image is a full-color pixel art.
+
 <img src="https://github.com/hmarf/gpixart/blob/master/img/resize.png?raw=true" width="150px">
 
 - Convert './image/pokemon.jpg' to './output.jpg' 16 pixel
