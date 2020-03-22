@@ -1,6 +1,7 @@
 # gpixart( pixel art )
 ## Overview
 Convert the image into a pixel art.
+Size and number of colors can be specified.
 
 <img src="https://github.com/hmarf/gpixart/blob/master/img/summaryImage.png?raw=true" width="700px">
 
@@ -40,15 +41,17 @@ The resized-image is also output at the same time. The image is a full-color pix
 
 <img src="https://github.com/hmarf/gpixart/blob/master/img/resize.png?raw=true" width="150px">
 
-- Convert './image/pokemon.jpg' to './output.jpg' 16 pixel
+- Convert './image/pokemon.jpg' to './output.jpg' 40 pixel, 16 color
 ```
 gpixart -i ./image/pokemon.jpg -o ./outout.jpg -m 40 -c 16
 ```
 <img src="https://github.com/hmarf/gpixart/blob/master/img/16color.png?raw=true" width="150px">
 
-- Convert './image/pokemon.jpg' to './output.jpg' 16 pixel
+- Convert './image/pokemon.jpg' to './output.jpg' 40 pixel, 4 color
 ```
 gpixart -i ./image/pokemon.jpg -o ./outout.jpg -m 40 -c 4
 ```
 <img src="https://github.com/hmarf/gpixart/blob/master/img/4color.png?raw=true" width="150px">
 
+## Reference
+- http://dot-e-nanika.com/
